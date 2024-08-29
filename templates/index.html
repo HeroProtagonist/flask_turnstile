@@ -1,5 +1,20 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" defer></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-twilight.min.css" />
+<script src="
+https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
+"></script>
+
+<div class="container mt-3">
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a class="{{nav_classes[0]}}" href="/">Managed</a>
+    </li>
+    <li class="nav-item">
+      <a class="{{nav_classes[1]}}" href="/invisible">Invisible</a>
+    </li>
+  </ul>
+</div>
 
 <div class="container mt-5">
   <div
@@ -8,7 +23,7 @@
 
   <button id="check-challenge" type="button" class="btn btn-primary mt-5">check challenge</button>
 
-  <div id="load-time"></div>
+  <div class="mt-5">Turnstile completed in: <strong id="load-time"></strong> ms</div>
 </div>
 
 <script>
@@ -17,13 +32,13 @@
 
   window.onloadTurnstileCallback = function () {
     turnstile.render('#turnstile-container', {
-        sitekey: '{{sitekey}}',
+        sitekey: "{{sitekey}}",
         callback: function(token) {
           t1 = performance.now()
           window.turnstileToken = token
 
           const loadTime = document.getElementById("load-time")
-          loadTime.innerText = t1 - t0
+          loadTime.innerText = (t1 - t0).toFixed(2)
         },
     });
 };
@@ -35,13 +50,25 @@ checkCallengeButton.addEventListener("click", async () => {
     method: "POST",
     body: JSON.stringify(
       {
-        token: window.turnstile_token
+        token: window.turnstileToken,
+        widget_mode: "{{widget_mode}}"
       }
     )
   })
 
   const json = await result.json()
 
-  console.log(json)
+  const container = document.createElement('div');
+  container.className = 'container'
+  const pre = document.createElement('pre');
+  const code = document.createElement('code');
+  code.className = 'language-json';
+  code.textContent = JSON.stringify(json, null, 4);
+
+  pre.appendChild(code);
+  container.appendChild(pre);
+
+  document.body.appendChild(container);
+  Prism.highlightAll();
 })
 </script>
