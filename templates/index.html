@@ -1,6 +1,18 @@
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" defer></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-twilight.min.css" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+  integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+  crossorigin="anonymous"
+/>
+<script
+  src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback"
+  defer
+></script>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-twilight.min.css"
+/>
 <script src="
 https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
 "></script>
@@ -17,58 +29,58 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
 </div>
 
 <div class="container mt-5">
-  <div
-    id="turnstile-container"
-  ></div>
+  <div id="turnstile-container"></div>
 
-  <button id="check-challenge" type="button" class="btn btn-primary mt-5">check challenge</button>
+  <button id="check-challenge" type="button" class="btn btn-primary mt-5">
+    check challenge
+  </button>
 
-  <div class="mt-5">Turnstile completed in: <strong id="load-time"></strong> ms</div>
+  <div class="mt-5">
+    Turnstile completed in: <strong id="load-time"></strong> ms
+  </div>
 </div>
 
 <script>
-  const t0 = performance.now()
-  let t1 = 0
+  const t0 = performance.now();
+  let t1 = 0;
 
   window.onloadTurnstileCallback = function () {
-    turnstile.render('#turnstile-container', {
-        sitekey: "{{sitekey}}",
-        callback: function(token) {
-          t1 = performance.now()
-          window.turnstileToken = token
+    turnstile.render("#turnstile-container", {
+      sitekey: "{{sitekey}}",
+      callback: function (token) {
+        t1 = performance.now();
+        window.turnstileToken = token;
 
-          const loadTime = document.getElementById("load-time")
-          loadTime.innerText = (t1 - t0).toFixed(2)
-        },
+        const loadTime = document.getElementById("load-time");
+        loadTime.innerText = (t1 - t0).toFixed(2);
+      },
     });
-};
+  };
 
-const checkCallengeButton = document.getElementById("check-challenge")
+  const checkCallengeButton = document.getElementById("check-challenge");
 
-checkCallengeButton.addEventListener("click", async () => {
-  const result = await fetch('/check-challenge', {
-    method: "POST",
-    body: JSON.stringify(
-      {
+  checkCallengeButton.addEventListener("click", async () => {
+    const result = await fetch("/check-challenge", {
+      method: "POST",
+      body: JSON.stringify({
         token: window.turnstileToken,
-        widget_mode: "{{widget_mode}}"
-      }
-    )
-  })
+        widget_mode: "{{widget_mode}}",
+      }),
+    });
 
-  const json = await result.json()
+    const json = await result.json();
 
-  const container = document.createElement('div');
-  container.className = 'container'
-  const pre = document.createElement('pre');
-  const code = document.createElement('code');
-  code.className = 'language-json';
-  code.textContent = JSON.stringify(json, null, 4);
+    const container = document.createElement("div");
+    container.className = "container";
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+    code.className = "language-json";
+    code.textContent = JSON.stringify(json, null, 4);
 
-  pre.appendChild(code);
-  container.appendChild(pre);
+    pre.appendChild(code);
+    container.appendChild(pre);
 
-  document.body.appendChild(container);
-  Prism.highlightAll();
-})
+    document.body.appendChild(container);
+    Prism.highlightAll();
+  });
 </script>
