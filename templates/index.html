@@ -29,7 +29,20 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
 </div>
 
 <div class="container mt-5">
-  <div id="turnstile-container"></div>
+  <div class="d-flex align-items-center">
+    <div id="turnstile-container"></div>
+
+    <!-- https://developers.cloudflare.com/turnstile/troubleshooting/testing/ -->
+    <div class="form-floating w-25" style="margin-left: 50px;">
+      <select class="form-select" id="secret-select">
+        <option selected>Actual secret key</option>
+        <option value="1x0000000000000000000000000000000AA">Always passes</option>
+        <option value="2x0000000000000000000000000000000AA">Always fails</option>
+        <option value="3x0000000000000000000000000000000AA">Yields a "token already spent" error</option>
+      </select>
+      <label for="secret-select">Select secret to use</label>
+    </div>
+  </div>
 
   <button id="check-challenge" type="button" class="btn btn-primary mt-5">
     check challenge
@@ -57,24 +70,27 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
     });
   };
 
-  const checkCallengeButton = document.getElementById("check-challenge");
+  const checkCallengeButton = document.getElementById("check-challenge")
 
   checkCallengeButton.addEventListener("click", async () => {
-    const result = await fetch("/check-challenge", {
+    const result = await fetch('/check-challenge', {
       method: "POST",
-      body: JSON.stringify({
-        token: window.turnstileToken,
-        widget_mode: "{{widget_mode}}",
-      }),
-    });
+      body: JSON.stringify(
+        {
+          token: window.turnstileToken,
+          widget_mode: "{{widget_mode}}",
+          secret_key: window.secretKey
+        }
+      )
+    })
 
-    const json = await result.json();
+    const json = await result.json()
 
-    const container = document.createElement("div");
-    container.className = "container";
-    const pre = document.createElement("pre");
-    const code = document.createElement("code");
-    code.className = "language-json";
+    const container = document.createElement('div');
+    container.className = 'container'
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    code.className = 'language-json';
     code.textContent = JSON.stringify(json, null, 4);
 
     pre.appendChild(code);
@@ -82,5 +98,11 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
 
     document.body.appendChild(container);
     Prism.highlightAll();
-  });
+  })
+
+  const select = document.getElementById("secret-select")
+  select.addEventListener("change", (event) => {
+    const { target: { value } } = event
+    window.secretKey = value
+  })
 </script>
