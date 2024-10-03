@@ -33,14 +33,38 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
     <div id="turnstile-container"></div>
 
     <!-- https://developers.cloudflare.com/turnstile/troubleshooting/testing/ -->
-    <div class="form-floating w-25" style="margin-left: 50px;">
+    <div class="form-floating w-25" style="margin-left: 50px">
       <select class="form-select" id="secret-select">
         <option selected>Actual secret key</option>
-        <option value="1x0000000000000000000000000000000AA">Always passes</option>
-        <option value="2x0000000000000000000000000000000AA">Always fails</option>
-        <option value="3x0000000000000000000000000000000AA">Yields a "token already spent" error</option>
+        <option value="1x0000000000000000000000000000000AA">
+          Always passes
+        </option>
+        <option value="2x0000000000000000000000000000000AA">
+          Always fails
+        </option>
+        <option value="3x0000000000000000000000000000000AA">
+          Yields a "token already spent" error
+        </option>
       </select>
       <label for="secret-select">Select secret to use</label>
+    </div>
+
+    <div class="form-floating w-25" style="margin-left: 50px">
+      <select class="form-select" id="site-key-select">
+        {% if widget_mode == "managed" %}
+        <option selected>Actual site key</option>
+        <option value="1x00000000000000000000AA">Always passes</option>
+        <option value="2x00000000000000000000AB">Always blocks</option>
+        <option value="3x00000000000000000000FF">
+          Forces an interactive challenge visible
+        </option>
+        {% else %}
+        <option selected>Actual site key</option>
+        <option value="1x00000000000000000000BB">Always passes</option>
+        <option value="2x00000000000000000000BB">Always blocks</option>
+        {% endif %}
+      </select>
+      <label for="secret-select">Select site key to use</label>
     </div>
   </div>
 
@@ -67,30 +91,33 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
         const loadTime = document.getElementById("load-time");
         loadTime.innerText = (t1 - t0).toFixed(2);
       },
+      "error-callback": function (errorCode) {
+        console.log({ errorCode });
+
+        return true;
+      },
     });
   };
 
-  const checkCallengeButton = document.getElementById("check-challenge")
+  const checkCallengeButton = document.getElementById("check-challenge");
 
   checkCallengeButton.addEventListener("click", async () => {
-    const result = await fetch('/check-challenge', {
+    const result = await fetch("/check-challenge", {
       method: "POST",
-      body: JSON.stringify(
-        {
-          token: window.turnstileToken,
-          widget_mode: "{{widget_mode}}",
-          secret_key: window.secretKey
-        }
-      )
-    })
+      body: JSON.stringify({
+        token: window.turnstileToken,
+        widget_mode: "{{widget_mode}}",
+        secret_key: window.secretKey,
+      }),
+    });
 
-    const json = await result.json()
+    const json = await result.json();
 
-    const container = document.createElement('div');
-    container.className = 'container'
-    const pre = document.createElement('pre');
-    const code = document.createElement('code');
-    code.className = 'language-json';
+    const container = document.createElement("div");
+    container.className = "container";
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+    code.className = "language-json";
     code.textContent = JSON.stringify(json, null, 4);
 
     pre.appendChild(code);
@@ -98,11 +125,13 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
 
     document.body.appendChild(container);
     Prism.highlightAll();
-  })
+  });
 
-  const select = document.getElementById("secret-select")
+  const select = document.getElementById("secret-select");
   select.addEventListener("change", (event) => {
-    const { target: { value } } = event
-    window.secretKey = value
-  })
+    const {
+      target: { value },
+    } = event;
+    window.secretKey = value;
+  });
 </script>
