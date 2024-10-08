@@ -35,7 +35,7 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
     <!-- https://developers.cloudflare.com/turnstile/troubleshooting/testing/ -->
     <div class="form-floating w-25" style="margin-left: 50px">
       <select class="form-select" id="secret-select">
-        <option selected>Actual secret key</option>
+        <option selected value="-1">Actual secret key</option>
         <option value="1x0000000000000000000000000000000AA">
           Always passes
         </option>
@@ -46,25 +46,24 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
           Yields a "token already spent" error
         </option>
       </select>
-      <label for="secret-select">Select secret to use</label>
+      <label for="secret-select">Select secret to use (BE verification)</label>
     </div>
 
     <div class="form-floating w-25" style="margin-left: 50px">
       <select class="form-select" id="site-key-select">
+        <option selected value="-1">Actual site key</option>
         {% if widget_mode == "managed" %}
-        <option selected>Actual site key</option>
         <option value="1x00000000000000000000AA">Always passes</option>
         <option value="2x00000000000000000000AB">Always blocks</option>
         <option value="3x00000000000000000000FF">
           Forces an interactive challenge visible
         </option>
         {% else %}
-        <option selected>Actual site key</option>
         <option value="1x00000000000000000000BB">Always passes</option>
         <option value="2x00000000000000000000BB">Always blocks</option>
         {% endif %}
       </select>
-      <label for="secret-select">Select site key to use</label>
+      <label for="secret-select">Select site key to use (FE challange)</label>
     </div>
   </div>
 
@@ -72,18 +71,53 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
     check challenge
   </button>
 
+  <button id="reset-widget" type="button" class="btn btn-success mt-5">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      fill="currentColor"
+      class="bi bi-arrow-clockwise"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill-rule="evenodd"
+        d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"
+      ></path>
+      <path
+        d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"
+      ></path>
+    </svg>
+    reset widget
+  </button>
+
   <div class="mt-5">
     Turnstile completed in: <strong id="load-time"></strong> ms
   </div>
+
+  <div id="results-container" style="height: 450px; overflow: scroll"></div>
 </div>
 
 <script>
+  const checkCallengeButton = document.getElementById("check-challenge");
+  const secretSelect = document.getElementById("secret-select");
+  const siteKeySelect = document.getElementById("site-key-select");
+  const resetWidget = document.getElementById("reset-widget");
+  const resultsContainer = document.getElementById("results-container");
+
   const t0 = performance.now();
   let t1 = 0;
 
+  let widgetId;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const sitekey = urlParams.get("sitekey");
+
+  if (sitekey && +sitekey !== -1) siteKeySelect.value = sitekey;
+
   window.onloadTurnstileCallback = function () {
-    turnstile.render("#turnstile-container", {
-      sitekey: "{{sitekey}}",
+    widgetId = turnstile.render("#turnstile-container", {
+      sitekey: sitekey || "{{sitekey}}",
       callback: function (token) {
         t1 = performance.now();
         window.turnstileToken = token;
@@ -99,8 +133,6 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
     });
   };
 
-  const checkCallengeButton = document.getElementById("check-challenge");
-
   checkCallengeButton.addEventListener("click", async () => {
     const result = await fetch("/check-challenge", {
       method: "POST",
@@ -113,25 +145,41 @@ https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js
 
     const json = await result.json();
 
-    const container = document.createElement("div");
-    container.className = "container";
     const pre = document.createElement("pre");
     const code = document.createElement("code");
     code.className = "language-json";
     code.textContent = JSON.stringify(json, null, 4);
 
     pre.appendChild(code);
-    container.appendChild(pre);
+    resultsContainer.prepend(pre);
 
-    document.body.appendChild(container);
     Prism.highlightAll();
   });
 
-  const select = document.getElementById("secret-select");
-  select.addEventListener("change", (event) => {
+  secretSelect.addEventListener("change", (event) => {
     const {
       target: { value },
     } = event;
     window.secretKey = value;
+  });
+
+  siteKeySelect.addEventListener("change", (event) => {
+    const {
+      target: { value },
+    } = event;
+    window.location = value;
+
+    var searchParams = new URLSearchParams(window.location.search);
+    searchParams.set("sitekey", value);
+
+    if (+value !== -1) {
+      window.location.search = searchParams.toString();
+    } else {
+      window.location.search = "";
+    }
+  });
+
+  resetWidget.addEventListener("click", () => {
+    window.turnstile.reset(widgetId);
   });
 </script>
